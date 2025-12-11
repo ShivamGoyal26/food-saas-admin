@@ -32,7 +32,7 @@ const MenuItem = ({ menu }: MenuItemProps) => {
   };
 
   return (
-    <Card className="group transition-all hover:shadow-lg hover:-translate-y-0.5">
+    <Card className="group transition-all hover:shadow-lg hover:-translate-y-0.5 cursor-pointer">
       <CardContent className="flex gap-4 p-4">
         {/* IMAGE */}
         <div className="h-24 w-24 shrink-0 overflow-hidden rounded-md bg-muted flex items-center justify-center">

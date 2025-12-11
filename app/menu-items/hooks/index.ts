@@ -8,6 +8,8 @@ import {
   deleteMenuById,
   getMenuById,
   getMenuItems,
+  updateMenuItem,
+  updateMenuItemPayload,
 } from "../api";
 import { CreateMenuItemPayload, MenuItemsResponse } from "@/schemas/menu";
 
@@ -48,9 +50,9 @@ export const useUpdateMenuItem = () => {
   return useMutation<
     MenuItemsResponse,
     AxiosError<ApiError>,
-    CreateMenuItemPayload
+    updateMenuItemPayload
   >({
-    mutationFn: (payload) => createMenuItem(payload),
+    mutationFn: (vars) => updateMenuItem(vars),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.menuItems });
     },

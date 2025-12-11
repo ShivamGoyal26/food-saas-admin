@@ -30,7 +30,13 @@ export default function Page() {
       ) : (
         <ul className="flex flex-col gap-8">
           {data?.map((menu) => (
-            <MenuItem key={menu._id} menu={menu} />
+            <div
+              key={menu._id}
+              onClick={() => router.push(`/menu-items/${menu._id}`)}
+              className="cursor-pointer hover:bg-accent rounded-lg transition"
+            >
+              <MenuItem menu={menu} />
+            </div>
           ))}
         </ul>
       )}
