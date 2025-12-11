@@ -1,17 +1,28 @@
+import { S3UrlResponse } from "./../../../schemas/menu";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { queryKeys } from "@/lib/query-keys";
 import { queryClient } from "@/lib/react-query-client";
 import { AxiosError } from "axios";
 import { ApiError } from "next/dist/server/api-utils";
 import {
+  attachImageToMenu,
   createMenuItem,
   deleteMenuById,
   getMenuById,
   getMenuItems,
+  getS3SignedUrl,
+  getUploadUrl,
   updateMenuItem,
   updateMenuItemPayload,
 } from "../api";
-import { CreateMenuItemPayload, MenuItemsResponse } from "@/schemas/menu";
+import {
+  AttachImageToMenuPayload,
+  CreateMenuItemPayload,
+  MenuImage,
+  MenuItemResponse,
+  MenuItemsResponse,
+  UploadImagePayload,
+} from "@/schemas/menu";
 
 // src/types/menu.ts
 
@@ -62,6 +73,49 @@ export const useUpdateMenuItem = () => {
 export const useDeleteMenuItem = () => {
   return useMutation<MenuItemsResponse, AxiosError<ApiError>, string>({
     mutationFn: (id) => deleteMenuById(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.menuItems });
+    },
+  });
+};
+
+export type useGetUploadUrlProps = {
+  payload: UploadImagePayload;
+  menuId: string;
+};
+
+export const useGetUploadUrl = () => {
+  return useMutation<S3UrlResponse, AxiosError<ApiError>, useGetUploadUrlProps>(
+    {
+      mutationFn: (parmas) => getUploadUrl(parmas),
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: queryKeys.menuItems });
+      },
+    }
+  );
+};
+
+export type useAttachImageToMenuPayload = {
+  menuId: string;
+  payload: AttachImageToMenuPayload;
+};
+
+export const useAttachImageToMenu = () => {
+  return useMutation<
+    MenuItemResponse,
+    AxiosError<ApiError>,
+    useAttachImageToMenuPayload
+  >({
+    mutationFn: (payload) => attachImageToMenu(payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.menuItems });
+    },
+  });
+};
+
+export const useGetS3SignedUrl = () => {
+  return useMutation<{ url: string }, AxiosError<ApiError>, { key: string }>({
+    mutationFn: (payload) => getS3SignedUrl(payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.menuItems });
     },

@@ -3,7 +3,9 @@ import {
   CreateMenuItemPayload,
   MenuItemResponse,
   MenuItemsResponse,
+  S3UrlResponse,
 } from "@/schemas/menu";
+import { useAttachImageToMenuPayload, useGetUploadUrlProps } from "./hooks";
 
 export type updateMenuItemPayload = {
   menuId: string;
@@ -29,4 +31,25 @@ export const updateMenuItem = ({ menuId, payload }: updateMenuItemPayload) =>
 export const deleteMenuById = (id: string) =>
   apiClient
     .delete<MenuItemsResponse>(`/menu-items/${id}`)
+    .then((res) => res.data);
+
+export const getUploadUrl = (params: useGetUploadUrlProps) =>
+  apiClient
+    .post<S3UrlResponse>(
+      `/menu-image-upload/${params.menuId}/images/upload-url`,
+      params.payload
+    )
+    .then((res) => res.data);
+
+export const attachImageToMenu = (params: useAttachImageToMenuPayload) =>
+  apiClient
+    .post<MenuItemResponse>(
+      `/menu-image-upload/${params.menuId}/images/attach`,
+      params.payload
+    )
+    .then((res) => res.data);
+
+export const getS3SignedUrl = (payload: { key: string }) =>
+  apiClient
+    .post<{ url: string }>(`/menu-image-upload/getSignedUrl`, payload)
     .then((res) => res.data);

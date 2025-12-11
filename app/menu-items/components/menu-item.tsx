@@ -7,7 +7,6 @@ import { MenuItemResponse } from "@/schemas/menu";
 import { useDeleteMenuItem } from "../hooks";
 import { toast } from "sonner";
 import { Trash2, Leaf } from "lucide-react";
-import Image from "next/image";
 
 type MenuItemProps = {
   menu: MenuItemResponse;
@@ -34,19 +33,6 @@ const MenuItem = ({ menu }: MenuItemProps) => {
   return (
     <Card className="group transition-all hover:shadow-lg hover:-translate-y-0.5 cursor-pointer">
       <CardContent className="flex gap-4 p-4">
-        {/* IMAGE */}
-        <div className="h-24 w-24 shrink-0 overflow-hidden rounded-md bg-muted flex items-center justify-center">
-          {menu.images?.[0]?.url ? (
-            <Image
-              src={menu.images[0].url}
-              alt={menu.name}
-              className="h-full w-full object-cover"
-            />
-          ) : (
-            <span className="text-xs text-muted-foreground">No Image</span>
-          )}
-        </div>
-
         {/* CONTENT */}
         <div className="flex flex-1 flex-col gap-2">
           {/* TITLE + VEG */}
