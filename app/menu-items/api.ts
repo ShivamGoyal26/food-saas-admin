@@ -49,7 +49,17 @@ export const attachImageToMenu = (params: useAttachImageToMenuPayload) =>
     )
     .then((res) => res.data);
 
-export const getS3SignedUrl = (payload: { key: string }) =>
+export const getS3SignedUrl = (params: { key: string }) =>
   apiClient
-    .post<{ url: string }>(`/menu-image-upload/getSignedUrl`, payload)
+    .post<{ url: string }>(`/menu-image-upload/getSignedUrl`, params)
+    .then((res) => res.data);
+
+export const deleteMenuItemImage = (params: {
+  menuId: string;
+  imageId: string;
+}) =>
+  apiClient
+    .delete<{ menuItem: MenuItemResponse }>(
+      `/menu-image-upload/${params.menuId}/images/${params.imageId}`
+    )
     .then((res) => res.data);

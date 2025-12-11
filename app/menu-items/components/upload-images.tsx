@@ -16,10 +16,14 @@ type Props = {
 };
 
 export function UploadImages({ menuId, serverImages }: Props) {
-  const { files, uploadImages, cancelUpload, retry, replace } = useUploadImages(
-    menuId,
-    serverImages
-  );
+  const {
+    files,
+    uploadImages,
+    cancelUpload,
+    retry,
+    replace,
+    deleteMenuItemImage,
+  } = useUploadImages(menuId, serverImages);
 
   const handleDrop = (selectedFiles: File[]) => {
     uploadImages(selectedFiles);
@@ -48,6 +52,7 @@ export function UploadImages({ menuId, serverImages }: Props) {
             cancelUpload={cancelUpload}
             retry={retry}
             replace={replace}
+            deleteMenuItemImage={deleteMenuItemImage}
           />
         ))}
       </div>

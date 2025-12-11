@@ -13,50 +13,60 @@ type Props = {
   cancelUpload: (id: string) => void;
   retry: (id: string) => void;
   replace: (id: string, file: File) => void;
+  deleteMenuItemImage: (id: string) => void;
 };
 
-const UploadImageItem = ({ file, cancelUpload, retry, replace }: Props) => {
+const UploadImageItem = ({
+  file,
+  cancelUpload,
+  retry,
+  replace,
+  deleteMenuItemImage,
+}: Props) => {
   const hiddenInput = useRef<HTMLInputElement | null>(null);
 
   const { mutate: fetchSignedUrl } = useGetS3SignedUrl();
   const [signedUrl, setSignedUrl] = useState<string | null>(null);
 
+  // Local cache so each image key is signed only once
+  const signedUrlCache = useRef<Record<string, string>>({});
+
   // ---------------------------------------------------
-  // ⭐ AUTO-FETCH SIGNED URL IF IMAGE IS FROM S3
+  // Fetch signed URL (with caching)
   // ---------------------------------------------------
   useEffect(() => {
-    // No need to fetch signed URL for new local files
-    if (file.file) return;
-
-    // If signed URL already computed → use it
-    if (signedUrl) return;
-
-    // If no key, cannot fetch S3 URL
     if (!file.key) return;
+    if (signedUrl) return; // Already loaded → no more calls
+    if (signedUrlCache.current[file.key]) {
+      setSignedUrl(signedUrlCache.current[file.key]);
+      return;
+    }
 
     fetchSignedUrl(
       { key: file.key },
       {
         onSuccess: (res) => {
-          setSignedUrl(res.url); // API returns { url: signedUrl }
+          signedUrlCache.current[file.key!] = res.url;
+          setSignedUrl(res.url);
         },
         onError: () => {
-          console.error("Failed to fetch signed S3 URL");
+          console.error("Failed to fetch signed URL for", file.key);
         },
       }
     );
-  }, [file, fetchSignedUrl, signedUrl]);
+  }, [file?.key]);
 
   // ---------------------------------------------------
-  // ⭐ Determine correct preview URL in priority order
+  // Priority for preview:
+  // 1) Local file preview
+  // 2) Signed S3 URL
+  // 3) Placeholder
   // ---------------------------------------------------
-  const previewUrl = signedUrl
-    ? signedUrl // 1️⃣ Signed URL from S3
-    : file.url
-    ? file.url // 2️⃣ Public backend URL
-    : file.file
-    ? URL.createObjectURL(file.file) // 3️⃣ Local temporary preview
-    : "/placeholder.png"; // 4️⃣ Default placeholder
+  const previewUrl = file.file
+    ? URL.createObjectURL(file.file)
+    : signedUrl
+    ? signedUrl
+    : "/placeholder.png";
 
   // ---------------------------------------------------
   // Open replace picker
@@ -67,6 +77,7 @@ const UploadImageItem = ({ file, cancelUpload, retry, replace }: Props) => {
     <div className="relative w-40 h-40 rounded-md overflow-hidden border shadow-sm group">
       {/* Preview Image */}
       <Image
+        unoptimized
         src={previewUrl}
         alt="preview"
         width={200}
@@ -74,7 +85,7 @@ const UploadImageItem = ({ file, cancelUpload, retry, replace }: Props) => {
         className="object-cover w-full h-full"
       />
 
-      {/* Status Badge */}
+      {/* STATUS BADGE */}
       <div className="absolute bottom-1 left-1 px-2 py-0.5 rounded text-xs font-semibold bg-black/40 text-white backdrop-blur">
         {file.state === "generating-url" && "Generating…"}
         {file.state === "uploading" && "Uploading…"}
@@ -83,14 +94,26 @@ const UploadImageItem = ({ file, cancelUpload, retry, replace }: Props) => {
         {file.state === "error" && "Failed"}
       </div>
 
-      {/* Loading overlay */}
-      {["generating-url", "uploading", "attaching"].includes(file.state) && (
+      {/* LOADING OVERLAY */}
+      {["generating-url", "uploading", "attaching", "deleting"].includes(
+        file.state
+      ) && (
         <div className="absolute inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm">
           <Spinner className="text-white" />
+
+          {file.state === "uploading" && (
+            <div
+              onClick={() => {
+                cancelUpload(file.id);
+              }}
+            >
+              cancelUpload
+            </div>
+          )}
         </div>
       )}
 
-      {/* Error overlay */}
+      {/* ERROR OVERLAY + RETRY */}
       {file.state === "error" && (
         <div
           className="absolute inset-0 flex flex-col items-center justify-center bg-black/50 text-white space-y-2 cursor-pointer"
@@ -101,7 +124,7 @@ const UploadImageItem = ({ file, cancelUpload, retry, replace }: Props) => {
         </div>
       )}
 
-      {/* Replace image */}
+      {/* REPLACE IMAGE (when completed) */}
       {file.state === "completed" && (
         <>
           <button
@@ -124,10 +147,10 @@ const UploadImageItem = ({ file, cancelUpload, retry, replace }: Props) => {
         </>
       )}
 
-      {/* Delete */}
+      {/* DELETE / CANCEL IMAGE */}
       <button
         type="button"
-        onClick={() => cancelUpload(file.id)}
+        onClick={() => deleteMenuItemImage(file.id)}
         className={cn(
           "absolute top-1 right-1 p-1 rounded-full bg-white shadow",
           "hover:bg-red-100 opacity-90 group-hover:opacity-100 transition"

@@ -2,7 +2,11 @@
 
 import { useState, useRef, useEffect } from "react";
 import { toast } from "sonner";
-import { useGetUploadUrl, useAttachImageToMenu } from ".";
+import {
+  useGetUploadUrl,
+  useAttachImageToMenu,
+  useDeleteMenuItemImage,
+} from ".";
 import { MenuImage } from "@/schemas/menu";
 
 export type UploadState =
@@ -11,7 +15,9 @@ export type UploadState =
   | "uploading"
   | "attaching"
   | "completed"
-  | "error";
+  | "error"
+  | "deleting"
+  | "failed";
 
 export type CustomFile = {
   id: string;
@@ -25,7 +31,6 @@ export type CustomFile = {
   url?: string;
   isPrimary?: boolean;
   position?: number;
-  serverImageId?: string;
 };
 
 const ALLOWED = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
@@ -39,6 +44,7 @@ export default function useUploadImages(
   const abortControllers = useRef<Record<string, AbortController>>({});
   const { mutateAsync: getUploadUrl } = useGetUploadUrl();
   const { mutateAsync: attachImage } = useAttachImageToMenu();
+  const { mutateAsync: deleteImage } = useDeleteMenuItemImage();
 
   // -------------------------------------------------------
   // Hydrate server images (on refresh or edit mode)
@@ -46,17 +52,16 @@ export default function useUploadImages(
   useEffect(() => {
     if (!serverImages) return;
 
-    const loaded = serverImages.map((img) => ({
-      id: img._id ?? crypto.randomUUID(), // safe fallback
+    const loaded: CustomFile[] = serverImages.map((img) => ({
+      id: img._id!.toString(),
       file: undefined,
       contentLength: 0,
       contentType: "image/jpeg",
-      state: "completed", // <— literal type, must match UploadState union
+      state: "completed",
       url: img.url,
       key: img.key,
       isPrimary: img.isPrimary,
       position: img.position,
-      serverImageId: img._id,
       error: undefined,
       uploadUrl: undefined,
     }));
@@ -64,9 +69,6 @@ export default function useUploadImages(
     setFiles(loaded);
   }, [serverImages]);
 
-  // -------------------------------------------------------
-  // File validation
-  // -------------------------------------------------------
   const validate = (file?: File): string | null => {
     if (!file) return null;
 
@@ -78,9 +80,6 @@ export default function useUploadImages(
     return null;
   };
 
-  // -------------------------------------------------------
-  // Step 1 - Generate signed upload URL
-  // -------------------------------------------------------
   const generateUrl = async (file: CustomFile) => {
     update(file.id, { state: "generating-url", error: undefined });
 
@@ -158,20 +157,25 @@ export default function useUploadImages(
     update(id, { state: "attaching" });
 
     try {
-      await attachImage({
-        menuId,
-        payload: {
-          key: key!,
-          url: url!,
-          isPrimary: files.length === 0,
+      await attachImage(
+        {
+          menuId,
+          payload: {
+            key: key!,
+            url: url!,
+            isPrimary: files.length === 0,
+          },
         },
-      });
-
-      update(id, {
-        state: "completed",
-        file: undefined,
-        error: undefined,
-      });
+        {
+          onSuccess: () => {
+            update(id, {
+              state: "completed",
+              file: undefined,
+              error: undefined,
+            });
+          },
+        }
+      );
     } catch (err) {
       const message = err instanceof Error ? err.message : "Upload failed";
       update(id, {
@@ -197,18 +201,12 @@ export default function useUploadImages(
     }
   };
 
-  // -------------------------------------------------------
-  // Update helper
-  // -------------------------------------------------------
   const update = (id: string, updates: Partial<CustomFile>) => {
     setFiles((prev) =>
       prev.map((f) => (f.id === id ? { ...f, ...updates } : f))
     );
   };
 
-  // -------------------------------------------------------
-  // Retry upload from failed stage
-  // -------------------------------------------------------
   const retry = (id: string) => {
     const file = files.find((f) => f.id === id);
     if (!file) return;
@@ -222,10 +220,7 @@ export default function useUploadImages(
     process(file);
   };
 
-  // -------------------------------------------------------
-  // Replace image with new file
-  // -------------------------------------------------------
-  const replace = (id: string, newFile: File) => {
+  const replace = async (id: string, newFile: File) => {
     const validation = validate(newFile);
     if (validation) {
       toast.error(validation);
@@ -233,12 +228,24 @@ export default function useUploadImages(
     }
 
     update(id, {
-      file: newFile,
-      contentLength: newFile.size,
-      contentType: newFile.type,
-      state: "idle",
+      state: "deleting",
       error: undefined,
     });
+
+    await deleteImage(
+      { menuId: menuId, imageId: id },
+      {
+        onSuccess: () => {
+          update(id, {
+            file: newFile,
+            contentLength: newFile.size,
+            contentType: newFile.type,
+            state: "idle",
+            error: undefined,
+          });
+        },
+      }
+    );
 
     process({
       ...files.find((f) => f.id === id)!,
@@ -253,11 +260,21 @@ export default function useUploadImages(
   // -------------------------------------------------------
   const uploadImages = (selected: File[]) => {
     if (files.length + selected.length > MAX_IMAGES) {
-      toast.error(`Max ${MAX_IMAGES} images allowed.`);
-      return;
+      return toast.error(`Max ${MAX_IMAGES} images allowed.`);
     }
 
-    const newFiles = selected.map((f) => ({
+    const validFiles: File[] = [];
+
+    selected.forEach((newFile) => {
+      const validation = validate(newFile);
+      if (validation) {
+        toast.error(validation);
+        return;
+      }
+      validFiles.push(newFile);
+    });
+
+    const newFiles = validFiles.map((f) => ({
       id: crypto.randomUUID(),
       file: f,
       contentLength: f.size,
@@ -273,6 +290,23 @@ export default function useUploadImages(
   const cancelUpload = (id: string) => {
     abortControllers.current[id]?.abort();
     update(id, { state: "error", error: "Upload cancelled" });
+    setFiles((pre) => pre.filter((file) => file.id !== id));
+  };
+
+  const deleteMenuItemImage = async (id: string) => {
+    await deleteImage(
+      { menuId: menuId, imageId: id },
+      {
+        onSuccess: () => {
+          update(id, {
+            state: "deleting",
+          });
+        },
+        onError: (err) => {
+          toast.error(err.message || "Delete failed please try again later");
+        },
+      }
+    );
   };
 
   return {
@@ -282,5 +316,6 @@ export default function useUploadImages(
     retry,
     replace,
     update,
+    deleteMenuItemImage,
   };
 }

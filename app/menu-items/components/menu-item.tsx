@@ -103,15 +103,14 @@ const MenuItem = ({ menu }: MenuItemProps) => {
 
       <Separator />
 
-      {/* ACTIONS */}
       <CardFooter className="flex justify-end gap-2 p-3">
-        {/* Later: Edit */}
-        {/* <Button size="sm" variant="outline">Edit</Button> */}
-
         <Button
           size="sm"
           variant="destructive"
-          onClick={handleDelete}
+          onClick={(e) => {
+            e.stopPropagation(); // 🚀 Prevent parent click
+            handleDelete();
+          }}
           disabled={isPending}
         >
           <Trash2 className="mr-1 h-4 w-4" />

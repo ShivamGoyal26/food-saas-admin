@@ -8,6 +8,7 @@ import {
   attachImageToMenu,
   createMenuItem,
   deleteMenuById,
+  deleteMenuItemImage,
   getMenuById,
   getMenuItems,
   getS3SignedUrl,
@@ -18,7 +19,6 @@ import {
 import {
   AttachImageToMenuPayload,
   CreateMenuItemPayload,
-  MenuImage,
   MenuItemResponse,
   MenuItemsResponse,
   UploadImagePayload,
@@ -88,9 +88,6 @@ export const useGetUploadUrl = () => {
   return useMutation<S3UrlResponse, AxiosError<ApiError>, useGetUploadUrlProps>(
     {
       mutationFn: (parmas) => getUploadUrl(parmas),
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: queryKeys.menuItems });
-      },
     }
   );
 };
@@ -107,8 +104,10 @@ export const useAttachImageToMenu = () => {
     useAttachImageToMenuPayload
   >({
     mutationFn: (payload) => attachImageToMenu(payload),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.menuItems });
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.menuItemById(variables.menuId),
+      });
     },
   });
 };
@@ -116,8 +115,20 @@ export const useAttachImageToMenu = () => {
 export const useGetS3SignedUrl = () => {
   return useMutation<{ url: string }, AxiosError<ApiError>, { key: string }>({
     mutationFn: (payload) => getS3SignedUrl(payload),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.menuItems });
+  });
+};
+
+export const useDeleteMenuItemImage = () => {
+  return useMutation<
+    { menuItem: MenuItemResponse },
+    AxiosError<ApiError>,
+    { menuId: string; imageId: string }
+  >({
+    mutationFn: (payload) => deleteMenuItemImage(payload),
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.menuItemById(variables.menuId),
+      });
     },
   });
 };
