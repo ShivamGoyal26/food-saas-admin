@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 const publicRoutes = ["/auth"];
-const protectedRoutes = ["/dashboard", "/menu-items"];
+const protectedRoutes = ["/dashboard", "/menu-items", "/menu"];
 
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
