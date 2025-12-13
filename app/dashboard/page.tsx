@@ -2,17 +2,23 @@ import { buttonVariants } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import Link from "next/link";
 import { UtensilsCrossed, Menu } from "lucide-react";
+import { LogoutButton } from "@/components/logout-button";
 
 export default function Page() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-muted/20 p-8">
       <div className="max-w-6xl mx-auto">
-        {/* Header */}
-        <div className="mb-12">
-          <h1 className="text-4xl font-bold tracking-tight mb-2">Dashboard</h1>
-          <p className="text-lg text-muted-foreground">
-            Manage your restaurant's menu items and daily menus
-          </p>
+        {/* Header with Logout */}
+        <div className="mb-12 flex items-center justify-between">
+          <div>
+            <h1 className="text-4xl font-bold tracking-tight mb-2">
+              Dashboard
+            </h1>
+            <p className="text-lg text-muted-foreground">
+              {`Manage your restaurant's menu items and daily menus`}
+            </p>
+          </div>
+          <LogoutButton />
         </div>
 
         {/* Cards Grid */}
