@@ -2,16 +2,18 @@
 
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { MenuItemsTable } from "./components/menu-items-table";
-import { useGetMenuItems } from "./hooks";
+import { DeletedMenuItemsTable } from "./components/deleted-menu-items-table";
+import { useGetMenuItems, useGetDeletedMenuItems } from "./hooks";
 import { useRouter } from "next/navigation";
 import { Plus } from "lucide-react";
 
-// MenuItem component is preserved for future use but not used currently
-// import MenuItem from "./components/menu-item";
-
 export default function Page() {
-  const { data = [], isLoading } = useGetMenuItems();
+  const { data: activeItems = [], isLoading: activeLoading } =
+    useGetMenuItems();
+  const { data: deletedItems = [], isLoading: deletedLoading } =
+    useGetDeletedMenuItems();
   const router = useRouter();
 
   return (
@@ -36,9 +38,29 @@ export default function Page() {
           </Button>
         </div>
 
-        {/* Table Card */}
+        {/* Tabs Section */}
         <Card className="p-6 border border-border/50">
-          <MenuItemsTable items={data} isLoading={isLoading} />
+          <Tabs defaultValue="active" className="w-full">
+            <TabsList className="grid w-full max-w-md grid-cols-2">
+              <TabsTrigger value="active">
+                Active Items ({activeItems.length})
+              </TabsTrigger>
+              <TabsTrigger value="deleted">
+                Deleted Items ({deletedItems.length})
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="active" className="mt-6">
+              <MenuItemsTable items={activeItems} isLoading={activeLoading} />
+            </TabsContent>
+
+            <TabsContent value="deleted" className="mt-6">
+              <DeletedMenuItemsTable
+                items={deletedItems}
+                isLoading={deletedLoading}
+              />
+            </TabsContent>
+          </Tabs>
         </Card>
       </div>
     </div>

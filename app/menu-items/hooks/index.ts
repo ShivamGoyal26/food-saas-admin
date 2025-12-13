@@ -9,10 +9,13 @@ import {
   createMenuItem,
   deleteMenuById,
   deleteMenuItemImage,
+  getDeletedMenuItems,
   getMenuById,
   getMenuItems,
   getS3SignedUrl,
   getUploadUrl,
+  permanentlyDeleteMenuItem,
+  restoreMenuItem,
   updateMenuItem,
   updateMenuItemPayload,
 } from "../api";
@@ -31,7 +34,8 @@ export const useGetMenuItems = () => {
     queryKey: queryKeys.menuItems,
     queryFn: async () => getMenuItems(),
     retry: false,
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 0,
+    refetchOnWindowFocus: true,
   });
 };
 
@@ -64,10 +68,10 @@ export const useUpdateMenuItem = () => {
     updateMenuItemPayload
   >({
     mutationFn: (vars) => updateMenuItem(vars),
-    onSuccess: (_data, variables) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.menuItems });
       queryClient.invalidateQueries({
-        queryKey: queryKeys.menuItemById(variables.menuId),
+        queryKey: queryKeys.deletedMenuItems,
       });
     },
   });
@@ -78,6 +82,7 @@ export const useDeleteMenuItem = () => {
     mutationFn: (id) => deleteMenuById(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.menuItems });
+      queryClient.invalidateQueries({ queryKey: queryKeys.deletedMenuItems });
     },
   });
 };
@@ -131,6 +136,39 @@ export const useDeleteMenuItemImage = () => {
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({
         queryKey: queryKeys.menuItemById(variables.menuId),
+      });
+    },
+  });
+};
+
+export const useGetDeletedMenuItems = () => {
+  return useQuery({
+    queryKey: queryKeys.deletedMenuItems,
+    queryFn: async () => getDeletedMenuItems(),
+    retry: false,
+    staleTime: 0,
+    refetchOnWindowFocus: true,
+  });
+};
+
+export const useRestoreMenuItem = () => {
+  return useMutation<MenuItemResponse, AxiosError<ApiError>, string>({
+    mutationFn: (id) => restoreMenuItem(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.deletedMenuItems,
+      });
+      queryClient.invalidateQueries({ queryKey: queryKeys.menuItems });
+    },
+  });
+};
+
+export const usePermanentlyDeleteMenuItem = () => {
+  return useMutation<{ message: string }, AxiosError<ApiError>, string>({
+    mutationFn: (id) => permanentlyDeleteMenuItem(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.deletedMenuItems,
       });
     },
   });

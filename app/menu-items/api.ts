@@ -63,3 +63,18 @@ export const deleteMenuItemImage = (params: {
       `/menu-image-upload/${params.menuId}/images/${params.imageId}`
     )
     .then((res) => res.data);
+
+export const getDeletedMenuItems = () =>
+  apiClient
+    .get<MenuItemsResponse>("/menu-items?includeDeleted=true&isActive=false")
+    .then((res) => res.data);
+
+export const restoreMenuItem = (id: string) =>
+  apiClient
+    .patch<MenuItemResponse>(`/menu-items/${id}/restore`)
+    .then((res) => res.data);
+
+export const permanentlyDeleteMenuItem = (id: string) =>
+  apiClient
+    .delete<{ message: string }>(`/menu-items/${id}/permanent`)
+    .then((res) => res.data);
