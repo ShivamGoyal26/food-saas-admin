@@ -35,9 +35,47 @@ export const CreateMenuItemSchema = z.object({
   dietaryTags: z.array(z.string()).optional(),
 });
 
-export type MenuSize = z.infer<typeof MenuSizeSchema>;
+export const CreateUploadUrlSchema = z.object({
+  contentType: z
+    .string({ message: "contentType is required" })
+    .min(1, "contentType is required"),
+
+  contentLength: z
+    .number({
+      message: "contentLength is required and should be a number",
+    })
+    .positive({ message: "contentLength must be greater than 0" }),
+});
+
+export const AttachImageSchema = z.object({
+  key: z.string({ message: "key is required" }),
+  url: z
+    .string()
+    .min(1, { message: "url is required" })
+    .refine(
+      (val) => {
+        try {
+          new URL(val);
+          return true;
+        } catch {
+          return false;
+        }
+      },
+      { message: "Invalid URL" }
+    ),
+  isPrimary: z.boolean().optional(),
+});
+
+export type MenuSize = z.infer<typeof MenuSizeSchema> & { _id: string };
+export type AttachImageToMenuPayload = z.infer<typeof AttachImageSchema>;
+export type UploadImagePayload = z.infer<typeof CreateUploadUrlSchema>;
 export type CreateMenuItemPayload = z.infer<typeof CreateMenuItemSchema>;
 
+export type S3UrlResponse = {
+  uploadUrl: string; // Pre-signed S3 upload URL
+  key: string; // S3 object key
+  url: string; // Public URL of the uploaded image
+};
 export interface MenuItemResponse {
   _id: string;
 

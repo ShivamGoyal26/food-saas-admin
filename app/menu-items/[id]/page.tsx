@@ -17,6 +17,7 @@ import { useParams } from "next/navigation";
 
 import { useGetMenuById, useDeleteMenuItem } from "../hooks";
 import { MenuSize } from "@/schemas/menu";
+import { UploadImages } from "../components/upload-images";
 
 export default function MenuDetailPage() {
   const params = useParams<{ id: string }>();
@@ -194,6 +195,8 @@ export default function MenuDetailPage() {
         )}
 
         <Separator />
+
+        <UploadImages menuId={menuId} serverImages={menu.images} />
 
         <Button variant="secondary" onClick={() => router.push("/menu-items")}>
           Back to Menu
