@@ -66,7 +66,7 @@ export const AttachImageSchema = z.object({
   isPrimary: z.boolean().optional(),
 });
 
-export type MenuSize = z.infer<typeof MenuSizeSchema>;
+export type MenuSize = z.infer<typeof MenuSizeSchema> & { _id: string };
 export type AttachImageToMenuPayload = z.infer<typeof AttachImageSchema>;
 export type UploadImagePayload = z.infer<typeof CreateUploadUrlSchema>;
 export type CreateMenuItemPayload = z.infer<typeof CreateMenuItemSchema>;

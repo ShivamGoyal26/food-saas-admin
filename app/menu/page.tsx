@@ -1,125 +1,88 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { useRouter } from "next/navigation";
-import { useGetMenus } from "./hooks";
-import { Badge } from "@/components/ui/badge";
+import { useState, useEffect } from "react";
+import { useGetMenusByDate } from "./hooks";
+import { Spinner } from "@/components/ui/spinner";
+import MenuHeader from "./components/menu-header";
+import MenuCalendar from "./components/menu-calendar";
+import MenuTabs from "./components/menu-tabs";
 
 export default function MenuPage() {
-  const router = useRouter();
-  const { data: menus = [], isLoading } = useGetMenus();
+  // State management
+  const [selectedDate, setSelectedDate] = useState<string>(() => {
+    const today = new Date();
+    return today.toISOString().split("T")[0];
+  });
+  const [isHydrated, setIsHydrated] = useState(false);
 
-  // Group menus by date for calendar view
-  const menusByDate = menus.reduce((acc, menu) => {
-    if (!acc[menu.date]) {
-      acc[menu.date] = [];
-    }
-    acc[menu.date].push(menu);
-    return acc;
-  }, {} as Record<string, typeof menus>);
+  // Hydration effect
+  useEffect(() => {
+    setIsHydrated(true);
+  }, []);
 
-  const sortedDates = Object.keys(menusByDate).sort();
+  // Fetch menus for selected date
+  const {
+    data: menuResponse,
+    isLoading,
+    error,
+    isError,
+  } = useGetMenusByDate(selectedDate, isHydrated);
+  const menu = menuResponse?.menus || [];
 
-  const getMenuTypeColor = (type: string) => {
-    switch (type) {
-      case "breakfast":
-        return "bg-yellow-100 text-yellow-800";
-      case "lunch":
-        return "bg-orange-100 text-orange-800";
-      case "dinner":
-        return "bg-purple-100 text-purple-800";
-      default:
-        return "bg-gray-100 text-gray-800";
-    }
-  };
+  // Render null during hydration to prevent mismatch
+  if (!isHydrated) {
+    return null;
+  }
+
+  // Error state
+  if (isError) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p className="text-red-500">
+          Error fetching menus: {error?.message || "Unknown error"}
+        </p>
+      </div>
+    );
+  }
+
+  // No menus state
+  if (!menu) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p className="text-muted-foreground">
+          No menus available for the selected date.
+        </p>
+      </div>
+    );
+  }
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8">
-      <div className="mb-8">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-bold">Menus</h1>
-            <p className="text-muted-foreground mt-2">
-              Manage and create menus for different dates
-            </p>
+    <div className="min-h-screen">
+      <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
+        {/* Header with date and create button */}
+        <MenuHeader selectedDate={selectedDate} />
+
+        {/* Date picker calendar */}
+        <MenuCalendar
+          selectedDate={selectedDate}
+          onSelectDate={setSelectedDate}
+          isHydrated={isHydrated}
+        />
+
+        {/* Loading state */}
+        {isLoading ? (
+          <div className="mt-20 flex justify-center">
+            <Spinner />
           </div>
-          <Button
-            onClick={() => router.push("/menu/create")}
-            className="w-full sm:w-auto"
-          >
-            Create New Menu
-          </Button>
-        </div>
+        ) : (
+          /* Menus tabs */
+          <MenuTabs
+            menuResponse={menuResponse}
+            isLoading={isLoading}
+            selectedDate={selectedDate}
+          />
+        )}
       </div>
-
-      {isLoading ? (
-        <div className="flex justify-center items-center h-64">
-          <p className="text-muted-foreground">Loading menus...</p>
-        </div>
-      ) : menus.length === 0 ? (
-        <Card className="p-8 text-center">
-          <p className="text-muted-foreground mb-4">No menus created yet</p>
-          <Button onClick={() => router.push("/menu/create")}>
-            Create Your First Menu
-          </Button>
-        </Card>
-      ) : (
-        <div className="grid gap-6">
-          {sortedDates.map((date) => {
-            const dateObj = new Date(date);
-            const formattedDate = dateObj.toLocaleDateString("en-US", {
-              weekday: "long",
-              year: "numeric",
-              month: "long",
-              day: "numeric",
-            });
-
-            return (
-              <Card key={date} className="p-6">
-                <h2 className="text-xl font-semibold mb-4">{formattedDate}</h2>
-                <div className="space-y-3">
-                  {menusByDate[date].map((menu) => (
-                    <div
-                      key={menu._id}
-                      className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 bg-muted/50 rounded-lg"
-                    >
-                      <div className="flex-1">
-                        <div className="flex items-center gap-3 mb-2">
-                          <Badge
-                            variant="outline"
-                            className={getMenuTypeColor(menu.menuType)}
-                          >
-                            {menu.menuType.charAt(0).toUpperCase() +
-                              menu.menuType.slice(1)}
-                          </Badge>
-                          {menu.isDraft && (
-                            <Badge variant="secondary">Draft</Badge>
-                          )}
-                        </div>
-                        <p className="text-sm text-muted-foreground">
-                          {menu.menuItems.length} items
-                          {menu.notes && ` • ${menu.notes}`}
-                        </p>
-                      </div>
-                      <div className="flex gap-2 w-full sm:w-auto">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => router.push(`/menu/${menu._id}`)}
-                          className="flex-1 sm:flex-none"
-                        >
-                          View
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </Card>
-            );
-          })}
-        </div>
-      )}
     </div>
   );
 }

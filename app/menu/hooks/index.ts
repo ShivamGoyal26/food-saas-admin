@@ -7,9 +7,11 @@ import {
   publishMenu,
   getMenus,
   getMenuById,
+  getMenusByDate,
   CreateMenuPayload,
   PublishMenuPayload,
   MenuResponse,
+  MenusByDateResponse,
 } from "../api";
 import { queryKeys } from "@/lib/query-keys";
 
@@ -28,6 +30,17 @@ export const useGetMenuById = (id: string) => {
     queryFn: async () => getMenuById(id),
     retry: false,
     staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+};
+
+export const useGetMenusByDate = (date: string, enabled: boolean = true) => {
+  return useQuery({
+    queryKey: [...queryKeys.menus, date],
+    queryFn: async () => getMenusByDate(date),
+    retry: false,
+    enabled: enabled && !!date,
+    staleTime: 0,
+    refetchOnWindowFocus: true,
   });
 };
 

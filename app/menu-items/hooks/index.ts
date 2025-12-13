@@ -64,8 +64,11 @@ export const useUpdateMenuItem = () => {
     updateMenuItemPayload
   >({
     mutationFn: (vars) => updateMenuItem(vars),
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.menuItems });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.menuItemById(variables.menuId),
+      });
     },
   });
 };
