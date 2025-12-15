@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import Image from "next/image";
 import {
   Table,
   TableBody,
@@ -115,76 +116,61 @@ export function MenuItemsTable({ items, isLoading }: MenuItemsTableProps) {
               <TableHead>Name</TableHead>
               <TableHead>Description</TableHead>
               <TableHead>Veg/Non-Veg</TableHead>
-              <TableHead>Sizes</TableHead>
               <TableHead>ID</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredItems.map((item) => (
-              <TableRow
-                key={item._id}
-                className="hover:bg-muted/50 cursor-pointer transition-colors"
-                onClick={() => router.push(`/menu-items/${item._id}`)}
-              >
-                <TableCell className="font-medium">{item.name}</TableCell>
-                <TableCell className="text-sm text-muted-foreground max-w-xs truncate">
-                  {item.description || "N/A"}
-                </TableCell>
-                <TableCell>
-                  <span className="px-2 py-1 rounded-md text-xs font-medium bg-accent">
-                    {item.isVeg ? "Veg" : "Non-Veg"}
-                  </span>
-                </TableCell>
-                <TableCell className="text-sm">
-                  {item.sizes.length > 0 ? (
-                    <div className="flex flex-wrap gap-2">
-                      {item.sizes.map((size) => (
-                        <Badge
-                          key={size._id}
-                          variant={size.isDefault ? "default" : "secondary"}
-                        >
-                          {size.label} - ₹{size.priceInPaise}
-                          {size.isDefault && " ✓"}
-                        </Badge>
-                      ))}
+            {filteredItems.map((item) => {
+              return (
+                <TableRow
+                  key={item._id}
+                  className="hover:bg-muted/50 cursor-pointer transition-colors"
+                  onClick={() => router.push(`/menu-items/${item._id}`)}
+                >
+                  <TableCell className="font-medium">{item.name}</TableCell>
+                  <TableCell className="text-sm text-muted-foreground max-w-xs truncate">
+                    {item.description || "N/A"}
+                  </TableCell>
+                  <TableCell>
+                    <span className="px-2 py-1 rounded-md text-xs font-medium bg-accent">
+                      {item.isVeg ? "Veg" : "Non-Veg"}
+                    </span>
+                  </TableCell>
+
+                  <TableCell className="text-xs text-muted-foreground font-mono truncate">
+                    {item._id.substring(0, 8)}...
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <div className="flex gap-2 justify-end">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleEdit(item._id);
+                        }}
+                        className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-950/20"
+                      >
+                        <Pencil className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setDeleteId(item._id);
+                        }}
+                        disabled={deleteMenuItemMutation.isPending}
+                        className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/20"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
                     </div>
-                  ) : (
-                    <Badge variant="secondary">No sizes</Badge>
-                  )}
-                </TableCell>
-                <TableCell className="text-xs text-muted-foreground font-mono truncate">
-                  {item._id.substring(0, 8)}...
-                </TableCell>
-                <TableCell className="text-right">
-                  <div className="flex gap-2 justify-end">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleEdit(item._id);
-                      }}
-                      className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-950/20"
-                    >
-                      <Pencil className="w-4 h-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setDeleteId(item._id);
-                      }}
-                      disabled={deleteMenuItemMutation.isPending}
-                      className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/20"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </TableCell>
-              </TableRow>
-            ))}
+                  </TableCell>
+                </TableRow>
+              );
+            })}
           </TableBody>
         </Table>
       </div>

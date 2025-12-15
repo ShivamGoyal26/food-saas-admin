@@ -134,8 +134,8 @@ export const MenuCalendar = memo(function MenuCalendar({
   }
 
   return (
-    <Card className="p-4">
-      <h2 className="text-lg font-semibold mb-4">Select Date</h2>
+    <Card className="p-3 max-w-sm">
+      <h2 className="text-sm font-semibold mb-2">Select Date</h2>
       <CalendarProvider>
         <CalendarDate>
           <CalendarDatePicker>

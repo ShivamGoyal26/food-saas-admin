@@ -8,17 +8,9 @@ export interface MenuImage {
   position: number; // Ordering index
 }
 
-export const MenuSizeSchema = z.object({
-  label: z.string().min(1, "Size label is required"),
-  priceInPaise: z.number().int().positive("Price must be greater than 0"),
-  calories: z.number().min(0).optional(),
-  isDefault: z.boolean().optional(),
-});
-
 export const CreateMenuItemSchema = z.object({
   name: z.string().min(2),
   description: z.string().max(5000).optional(),
-  sizes: z.array(MenuSizeSchema).min(1, "At least one size required"),
   images: z
     .array(
       z.object({
@@ -66,7 +58,22 @@ export const AttachImageSchema = z.object({
   isPrimary: z.boolean().optional(),
 });
 
-export type MenuSize = z.infer<typeof MenuSizeSchema> & { _id: string };
+// Inventory Schema
+export const InventoryItemSchema = z.object({
+  menuItemId: z.string().regex(/^[0-9a-f]{24}$/i, "Invalid menu item ID"),
+  sizeLabel: z
+    .string()
+    .min(1, "Size label is required")
+    .max(50, "Size label too long"),
+  quantity: z
+    .number()
+    .int("Quantity must be an integer")
+    .min(0, "Quantity cannot be negative"),
+  price: z.number().min(0, "Price cannot be negative"),
+  calories: z.number().min(0, "Calories cannot be negative").optional(),
+  isDefault: z.boolean().optional(),
+});
+
 export type AttachImageToMenuPayload = z.infer<typeof AttachImageSchema>;
 export type UploadImagePayload = z.infer<typeof CreateUploadUrlSchema>;
 export type CreateMenuItemPayload = z.infer<typeof CreateMenuItemSchema>;
@@ -82,8 +89,6 @@ export interface MenuItemResponse {
   name: string;
   slug: string;
   description?: string;
-
-  sizes: MenuSize[];
 
   images: MenuImage[];
 

@@ -5,24 +5,26 @@ import { ApiError } from "next/dist/server/api-utils";
 import {
   createMenu,
   publishMenu,
-  getMenus,
+  unpublishMenu,
+  updateMenu,
   getMenuById,
   getMenusByDate,
+  getMenuDetail,
+  updateInventory,
+  deleteInventory,
+  createInventory,
   CreateMenuPayload,
   PublishMenuPayload,
+  UpdateMenuPayload,
   MenuResponse,
-  MenusByDateResponse,
+  MenuType,
+  CreateMenuResponse,
+  UpdateInventoryPayload,
+  CreateInventoryPayload,
+  InventoryItem,
+  MenuDetailResponse,
 } from "../api";
 import { queryKeys } from "@/lib/query-keys";
-
-export const useGetMenus = () => {
-  return useQuery({
-    queryKey: queryKeys.menus,
-    queryFn: async () => getMenus(),
-    retry: false,
-    staleTime: 5 * 60 * 1000, // 5 minutes
-  });
-};
 
 export const useGetMenuById = (id: string) => {
   return useQuery({
@@ -30,6 +32,16 @@ export const useGetMenuById = (id: string) => {
     queryFn: async () => getMenuById(id),
     retry: false,
     staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+};
+
+export const useGetMenuDetail = (menuId: string, enabled: boolean = true) => {
+  return useQuery<MenuDetailResponse, AxiosError<ApiError>>({
+    queryKey: [...queryKeys.menus, menuId, "detail"],
+    queryFn: async () => getMenuDetail(menuId),
+    retry: false,
+    enabled: enabled && !!menuId,
+    staleTime: 0,
   });
 };
 
@@ -45,7 +57,11 @@ export const useGetMenusByDate = (date: string, enabled: boolean = true) => {
 };
 
 export const useCreateMenu = () => {
-  return useMutation<MenuResponse, AxiosError<ApiError>, CreateMenuPayload>({
+  return useMutation<
+    CreateMenuResponse,
+    AxiosError<ApiError>,
+    CreateMenuPayload
+  >({
     mutationFn: (payload) => createMenu(payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.menus });
@@ -65,6 +81,89 @@ export const usePublishMenu = () => {
     PublishMenuPayload
   >({
     mutationFn: (payload) => publishMenu(payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.menus });
+    },
+  });
+};
+
+/**
+ * Hook for unpublishing menus
+ * This will revert the menu to draft state
+ */
+export const useUnpublishMenu = () => {
+  return useMutation<
+    { message: string; menu: MenuType },
+    AxiosError<ApiError>,
+    { menuId: string }
+  >({
+    mutationFn: ({ menuId }) => unpublishMenu(menuId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.menus });
+    },
+  });
+};
+
+/**
+ * Hook for updating inventory items
+ */
+export const useUpdateInventory = () => {
+  return useMutation<
+    { message: string; inventory: InventoryItem },
+    AxiosError<ApiError>,
+    { menuId: string; inventoryId: string; payload: UpdateInventoryPayload }
+  >({
+    mutationFn: ({ menuId, inventoryId, payload }) =>
+      updateInventory(menuId, inventoryId, payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.menus });
+    },
+  });
+};
+
+/**
+ * Hook for deleting inventory items
+ */
+export const useDeleteInventory = () => {
+  return useMutation<
+    { message: string },
+    AxiosError<ApiError>,
+    { menuId: string; inventoryId: string }
+  >({
+    mutationFn: ({ menuId, inventoryId }) =>
+      deleteInventory(menuId, inventoryId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.menus });
+    },
+  });
+};
+
+/**
+ * Hook for creating inventory items
+ */
+export const useCreateInventory = () => {
+  return useMutation<
+    { message: string; inventory: InventoryItem },
+    AxiosError<ApiError>,
+    { menuId: string; payload: CreateInventoryPayload }
+  >({
+    mutationFn: ({ menuId, payload }) => createInventory(menuId, payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.menus });
+    },
+  });
+};
+
+/**
+ * Hook for updating menu (notes and menuItems)
+ */
+export const useUpdateMenu = () => {
+  return useMutation<
+    MenuType,
+    AxiosError<ApiError>,
+    { menuId: string; payload: UpdateMenuPayload }
+  >({
+    mutationFn: ({ menuId, payload }) => updateMenu(menuId, payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.menus });
     },
