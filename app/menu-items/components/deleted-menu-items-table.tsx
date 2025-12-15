@@ -134,7 +134,6 @@ export function DeletedMenuItemsTable({
               <TableHead>Name</TableHead>
               <TableHead>Description</TableHead>
               <TableHead>Veg/Non-Veg</TableHead>
-              <TableHead>Sizes</TableHead>
               <TableHead>ID</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
@@ -154,23 +153,7 @@ export function DeletedMenuItemsTable({
                     {item.isVeg ? "Veg" : "Non-Veg"}
                   </span>
                 </TableCell>
-                <TableCell className="text-sm">
-                  {item.sizes.length > 0 ? (
-                    <div className="flex flex-wrap gap-2">
-                      {item.sizes.map((size) => (
-                        <Badge
-                          key={size._id}
-                          variant={size.isDefault ? "default" : "secondary"}
-                        >
-                          {size.label} - ₹{size.priceInPaise}
-                          {size.isDefault && " ✓"}
-                        </Badge>
-                      ))}
-                    </div>
-                  ) : (
-                    <Badge variant="secondary">No sizes</Badge>
-                  )}
-                </TableCell>
+
                 <TableCell className="text-xs text-muted-foreground font-mono truncate">
                   {item._id.substring(0, 8)}...
                 </TableCell>

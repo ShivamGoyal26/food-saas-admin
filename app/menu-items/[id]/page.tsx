@@ -130,42 +130,6 @@ export default function MenuDetailPage() {
           )}
         </div>
 
-        <Separator />
-
-        {/* SIZES */}
-        <div>
-          <h3 className="text-lg font-semibold">Available Sizes</h3>
-          <div className="mt-3 space-y-3">
-            {menu.sizes.map((s: MenuSize, index: number) => (
-              <div
-                key={index}
-                className="flex items-start justify-between rounded-md border p-3"
-              >
-                <div>
-                  <p className="text-sm font-medium flex items-center gap-2">
-                    {s.label}
-                    {s.isDefault && (
-                      <Badge className="bg-blue-600 hover:bg-blue-700">
-                        Default
-                      </Badge>
-                    )}
-                  </p>
-
-                  {s.calories && (
-                    <p className="text-xs text-muted-foreground">
-                      {s.calories} calories
-                    </p>
-                  )}
-                </div>
-
-                <p className="font-semibold">₹{s.priceInPaise}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <Separator />
-
         {/* TAGS */}
         {menu.tags?.length > 0 && (
           <div>

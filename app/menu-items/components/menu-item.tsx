@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import Image from "next/image";
 
 import { MenuItemResponse } from "@/schemas/menu";
 import { useDeleteMenuItem } from "../hooks";
@@ -14,6 +15,8 @@ type MenuItemProps = {
 
 const MenuItem = ({ menu }: MenuItemProps) => {
   const { mutate: deleteMenuItem, isPending } = useDeleteMenuItem();
+  const primaryImage =
+    menu.images?.find((img) => img.isPrimary) || menu.images?.[0];
 
   const handleDelete = () => {
     deleteMenuItem(menu._id, {
@@ -31,8 +34,21 @@ const MenuItem = ({ menu }: MenuItemProps) => {
   };
 
   return (
-    <Card className="group transition-all hover:shadow-lg hover:-translate-y-0.5 cursor-pointer">
+    <Card className="group transition-all hover:shadow-lg hover:-translate-y-0.5 cursor-pointer overflow-hidden">
       <CardContent className="flex gap-4 p-4">
+        {/* IMAGE */}
+        {primaryImage && (
+          <div className="relative w-24 h-24 flex-shrink-0 rounded-md overflow-hidden bg-muted">
+            <Image
+              src={primaryImage.url}
+              alt={menu.name}
+              fill
+              className="object-cover"
+              unoptimized
+            />
+          </div>
+        )}
+
         {/* CONTENT */}
         <div className="flex flex-1 flex-col gap-2">
           {/* TITLE + VEG */}

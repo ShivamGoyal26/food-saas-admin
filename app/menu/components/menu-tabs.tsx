@@ -34,9 +34,7 @@ export const MenuTabs = memo(function MenuTabs({
         <ShowMenuItems
           type="breakfast"
           selectedDate={selectedDate}
-          menuItems={menuResponse?.menus.breakfast?.menuItems || []}
-          isDraft={menuResponse?.menus.breakfast?.isDraft || false}
-          isPublished={menuResponse?.menus.breakfast?.isPublished || false}
+          menuData={menuResponse?.menus.breakfast}
         />
       </TabsContent>
 
@@ -44,9 +42,7 @@ export const MenuTabs = memo(function MenuTabs({
         <ShowMenuItems
           type="lunch"
           selectedDate={selectedDate}
-          menuItems={menuResponse?.menus.lunch?.menuItems || []}
-          isDraft={menuResponse?.menus.lunch?.isDraft || false}
-          isPublished={menuResponse?.menus.lunch?.isPublished || false}
+          menuData={menuResponse?.menus.lunch}
         />
       </TabsContent>
 
@@ -54,9 +50,7 @@ export const MenuTabs = memo(function MenuTabs({
         <ShowMenuItems
           type="dinner"
           selectedDate={selectedDate}
-          menuItems={menuResponse?.menus.dinner?.menuItems || []}
-          isDraft={menuResponse?.menus.dinner?.isDraft || false}
-          isPublished={menuResponse?.menus.dinner?.isPublished || false}
+          menuData={menuResponse?.menus.dinner}
         />
       </TabsContent>
     </Tabs>
